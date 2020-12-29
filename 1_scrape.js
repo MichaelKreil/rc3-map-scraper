@@ -134,7 +134,6 @@ async function generateScreenshot(baseUrl, data) {
 		//console.log(l);
 
 		if (l.type !== 'tilelayer') throw Error();
-		if (l.opacity !== 1) throw Error();
 		if (l.height !== data.height) throw Error();
 		if (l.width !== data.width) throw Error();
 		if (l.x !== 0) throw Error();
@@ -156,6 +155,7 @@ async function generateScreenshot(baseUrl, data) {
 				if (!tileIndex) return;
 				let tile = tiles[tileIndex];
 				if (!tile) return;
+				ctx.globalAlpha = l.opacity;
 				ctx.drawImage(tile.image, tile.x, tile.y, 32, 32, x0*32, y0*32, 32, 32);
 			})
 		}

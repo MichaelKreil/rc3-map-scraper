@@ -67,7 +67,7 @@ function Queue() {
 function fetch(url) {
 	let key = url.replace(/[^a-z0-9_\-]/gi, '_');
 	return cacheFetch(key, () => {
-		console.log('fetch', url);
+		console.log('   fetch', url);
 		return new Promise((resolve, reject) => {
 			https.get(url, {timeout:10*1000}, res => {
 				let buffers = [];
@@ -101,7 +101,7 @@ async function generateScreenshot(baseUrl, data) {
 
 	if (fs.existsSync(pngFilename)) return;
 
-	console.log('generateScreenshot', pngFilename);
+	console.log('   generateScreenshot', pngFilename);
 
 	let tiles = [];
 
@@ -115,8 +115,8 @@ async function generateScreenshot(baseUrl, data) {
 	//console.dir(data, {depth:9});
 	for (let tileset of data.tilesets) {
 		//console.log(tileset);
-		if (!tileset.tileheight) {console.log(tileset); throw Error()};
-		if (!tileset.tilewidth) {console.log(tileset); throw Error()};
+		if (!tileset.tileheight) continue;
+		if (!tileset.tilewidth) continue;
 		if (tileset.backgroundcolor) {console.log(tileset); throw Error()};
 		if (tileset.objectalignment) {console.log(tileset); throw Error()};
 		if (tileset.tileoffset) {console.log(tileset); throw Error()};
@@ -124,7 +124,13 @@ async function generateScreenshot(baseUrl, data) {
 		tileset.margin = tileset.margin || 0;
 		tileset.spacing = tileset.spacing || 0;
 
-		let image = await getImage(tileset.image);
+		let image;
+		try {
+			image = await getImage(tileset.image);
+		} catch (e) {
+			console.log(e);
+			return;
+		}
 		if (tileset.transparentcolor) image = await makeColorTransparent(image, tileset.transparentcolor);
 
 		for (let i = 0; i < tileset.tilecount; i++) {
@@ -143,7 +149,13 @@ async function generateScreenshot(baseUrl, data) {
 
 				if (!t.imageheight || !t.imagewidth) throw Error();
 
-				let image2 = await getImage(t.image);
+				let image2
+				try {
+					image2 = await getImage(t.image);
+				} catch (e) {
+					console.log(e);
+					return;
+				}
 				if (tileset.transparentcolor) image2 = await makeColorTransparent(image2, tileset.transparentcolor);
 
 				tiles[t.id+tileset.firstgid] = {

@@ -291,6 +291,7 @@ function scanForMapUrls(baseUrl, data) {
 				case 'silent':
 				case 'start':
 				case 'startlayer':
+				case 'start_layer':
 				case 'stew.one':
 				case 'wilkommen':
 				case 'xjitsitrigger':

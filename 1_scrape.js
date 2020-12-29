@@ -19,7 +19,7 @@ run();
 async function run() {
 	while (!queue.empty()) {
 		let url = queue.next();
-		if (url.startsWith('https://cert.maps.at.rc3.world')) continue;
+		if (url === 'https://cert.maps.at.rc3.world//main.json') continue;
 
 		let data;
 		try {
@@ -102,32 +102,93 @@ async function generateScreenshot(baseUrl, data) {
 	if (data.tilewidth !== 32) throw Error();
 	if (data.tileheight !== 32) throw Error();
 	if (data.type !== 'map') throw Error();
+	if (data.infinite) throw Error();
+	if ((data.compressionlevel !== undefined) && (data.compressionlevel !== -1)) { console.log(data); throw Error() };
+	if (data.orientation !== 'orthogonal') throw Error();
 
 	//console.dir(data, {depth:9});
 	for (let tileset of data.tilesets) {
-		if (tileset.tileheight !== 32) throw Error();
-		if (tileset.tilewidth !== 32) throw Error();
-		if (tileset.margin !== 0) throw Error();
-		if (tileset.spacing !== 0) throw Error();
-		if (!tileset.columns) throw Error();
+		//console.log(tileset);
+		if (!tileset.tileheight) {console.log(tileset); throw Error()};
+		if (!tileset.tilewidth) {console.log(tileset); throw Error()};
+		if (tileset.spacing !== 0) {console.log(tileset); throw Error()};
+		if (tileset.backgroundcolor) {console.log(tileset); throw Error()};
+		if (tileset.objectalignment) {console.log(tileset); throw Error()};
+		if (tileset.tileoffset) {console.log(tileset); throw Error()};
 
-		
+		tileset.margin = tileset.margin || 0;
 
-		let url = URL.resolve(baseUrl, tileset.image);
+		let image = await getImage(tileset.image);
+		if (tileset.transparentcolor) image = await makeColorTransparent(image, tileset.transparentcolor);
+
+		for (let i = 0; i < tileset.tilecount; i++) {
+			let x = tileset.margin + tileset.tilewidth*(i % tileset.columns);
+			let y = tileset.margin + tileset.tileheight*(Math.floor(i/tileset.columns));
+			tiles[i+tileset.firstgid] = { image, x, y, w:tileset.tilewidth, h:tileset.tileheight };
+		}
+		if (tileset.tiles) {
+			for (let t of tileset.tiles) {
+				if (!t.image) {
+					let x = tileset.margin + tileset.tilewidth*(t.id % tileset.columns);
+					let y = tileset.margin + tileset.tileheight*(Math.floor(t.id/tileset.columns));
+					tiles[t.id+tileset.firstgid] = { image, x, y, w:tileset.tilewidth, h:tileset.tileheight };
+					continue;
+				}
+
+				if (!t.imageheight || !t.imagewidth) throw Error();
+
+				let image2 = await getImage(t.image);
+				if (tileset.transparentcolor) image2 = await makeColorTransparent(image2, tileset.transparentcolor);
+
+				tiles[t.id+tileset.firstgid] = {
+					image:image2,
+					x:0,
+					y:0,
+					w:t.imagewidth,
+					h:t.imageheight
+				}
+			}
+		}
+	}
+
+	async function makeColorTransparent(image, color) {
+		if (color.length !== 7) throw Error();
+		if (color[0] !== '#') throw Error();
+		color = [
+			parseInt(color.slice(1,3), 16),
+			parseInt(color.slice(3,5), 16),
+			parseInt(color.slice(5,7), 16),
+		]
+
+		let width = image.width;
+		let height = image.height;
+		let canvas2 = createCanvas(width, height);
+		let ctx2 = canvas2.getContext('2d');
+		ctx2.drawImage(image, 0, 0);
+		let imageData = ctx2.getImageData(0,0,width,height);
+		let data = imageData.data;
+		for (let i = 0; i < data.length; i += 4) {
+			if (data[i+0] !== color[0]) continue;
+			if (data[i+1] !== color[1]) continue;
+			if (data[i+2] !== color[2]) continue;
+			data[i + 3] = 0;
+		}
+		ctx2.putImageData(imageData, 0, 0);
+
+		return canvas2;
+	}
+
+	function getImage(url) {
+		if (!url) return new Promise(r => r(false));
+
+		url = URL.resolve(baseUrl, url);
 		url = url.replace(/#.*/,'');
-
-		let image = await (new Promise(resolve => {
+		return new Promise(resolve => {
 			const img = new Image();
 			img.onload = () => resolve(img);
 			img.onerror = err => { throw err }
-			fetch(url).then(data => img.src = data);
-		}))
-
-		for (let i = 0; i < tileset.tilecount; i++) {
-			let x = 32*(i % tileset.columns);
-			let y = 32*(Math.floor(i/tileset.columns));
-			tiles[i+tileset.firstgid] = { image, x, y };
-		}
+			fetch(url).then(buffer => img.src = buffer);
+		})
 	}
 
 	let layerData = [];
@@ -149,7 +210,13 @@ async function generateScreenshot(baseUrl, data) {
 
 	let canvas = createCanvas(data.width*32, data.height*32);
 	let ctx = canvas.getContext('2d', {alpha: true});
-	ctx.clearRect(0, 0, data.width*32, data.height*32)
+
+	if (data.backgroundcolor) {
+		ctx.fillStyle = data.backgroundcolor;
+		ctx.fillRect(0, 0, data.width*32, data.height*32)
+	} else {
+		ctx.clearRect(0, 0, data.width*32, data.height*32)
+	}
 
 	for (let y0 = 0; y0 < data.height; y0++) {
 		for (let x0 = 0; x0 < data.width; x0++) {
@@ -160,8 +227,9 @@ async function generateScreenshot(baseUrl, data) {
 				if (!tileIndex) return;
 				let tile = tiles[tileIndex];
 				if (!tile) return;
+				if (!tile.image) return;
 				ctx.globalAlpha = l.opacity;
-				ctx.drawImage(tile.image, tile.x, tile.y, 32, 32, x0*32, y0*32, 32, 32);
+				ctx.drawImage(tile.image, tile.x, tile.y, tile.w, tile.h, x0*32, y0*32, 32, 32);
 			})
 		}
 	}

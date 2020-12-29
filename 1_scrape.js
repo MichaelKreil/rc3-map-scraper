@@ -110,7 +110,6 @@ async function generateScreenshot(baseUrl, data) {
 	if (data.tileheight !== 32) throw Error();
 	if (data.type !== 'map') throw Error();
 	if (data.infinite) throw Error();
-	if ((data.compressionlevel !== undefined) && (data.compressionlevel !== -1)) { console.log(data); throw Error() };
 	if (data.orientation !== 'orthogonal') throw Error();
 
 	//console.dir(data, {depth:9});
@@ -199,9 +198,14 @@ async function generateScreenshot(baseUrl, data) {
 	}
 
 	let layerData = [];
-	let visibleLayers = data.layers.filter(l => {
+	let visibleLayers = data.layers;
+	visibleLayers.forEach(l => {
+		if (l.type === 'group') l.layers.forEach(l => visibleLayers.push(l));
+	})
+	visibleLayers = visibleLayers.filter(l => {
 		if (!l.visible) return false;
 		if (l.opacity === 0) return false;
+		if (l.type === 'group') return false;
 		if (l.type === 'objectgroup') return false;
 		if (l.type === 'imagelayer') return false; // sorry saarland
 

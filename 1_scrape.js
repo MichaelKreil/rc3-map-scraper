@@ -111,26 +111,26 @@ async function generateScreenshot(baseUrl, data) {
 		//console.log(tileset);
 		if (!tileset.tileheight) {console.log(tileset); throw Error()};
 		if (!tileset.tilewidth) {console.log(tileset); throw Error()};
-		if (tileset.spacing !== 0) {console.log(tileset); throw Error()};
 		if (tileset.backgroundcolor) {console.log(tileset); throw Error()};
 		if (tileset.objectalignment) {console.log(tileset); throw Error()};
 		if (tileset.tileoffset) {console.log(tileset); throw Error()};
 
 		tileset.margin = tileset.margin || 0;
+		tileset.spacing = tileset.spacing || 0;
 
 		let image = await getImage(tileset.image);
 		if (tileset.transparentcolor) image = await makeColorTransparent(image, tileset.transparentcolor);
 
 		for (let i = 0; i < tileset.tilecount; i++) {
-			let x = tileset.margin + tileset.tilewidth*(i % tileset.columns);
-			let y = tileset.margin + tileset.tileheight*(Math.floor(i/tileset.columns));
+			let x = tileset.margin + (tileset.spacing+tileset.tilewidth)*(i % tileset.columns);
+			let y = tileset.margin + (tileset.spacing+tileset.tileheight)*(Math.floor(i/tileset.columns));
 			tiles[i+tileset.firstgid] = { image, x, y, w:tileset.tilewidth, h:tileset.tileheight };
 		}
 		if (tileset.tiles) {
 			for (let t of tileset.tiles) {
 				if (!t.image) {
-					let x = tileset.margin + tileset.tilewidth*(t.id % tileset.columns);
-					let y = tileset.margin + tileset.tileheight*(Math.floor(t.id/tileset.columns));
+					let x = tileset.margin + (tileset.spacing+tileset.tilewidth)*(t.id % tileset.columns);
+					let y = tileset.margin + (tileset.spacing+tileset.tileheight)*(Math.floor(t.id/tileset.columns));
 					tiles[t.id+tileset.firstgid] = { image, x, y, w:tileset.tilewidth, h:tileset.tileheight };
 					continue;
 				}

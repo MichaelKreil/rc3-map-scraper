@@ -205,7 +205,7 @@ async function generateScreenshot(baseUrl, data) {
 			const img = new Image();
 			img.onload = () => resolve(img);
 			img.onerror = err => reject(err);
-			fetch(url).then(buffer => img.src = buffer).catch(reject);
+			fetch(url).then(buffer => img.src = buffer).catch(() => resolve(false));
 		})
 	}
 

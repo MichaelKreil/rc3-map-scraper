@@ -126,7 +126,7 @@ async function generateScreenshot(baseUrl, data) {
 
 		let image;
 		try {
-			image = await getImage(tileset.image);
+			image = await loadImage(tileset.image);
 		} catch (e) {
 			console.log(e);
 			return;
@@ -151,7 +151,7 @@ async function generateScreenshot(baseUrl, data) {
 
 				let image2
 				try {
-					image2 = await getImage(t.image);
+					image2 = await loadImage(t.image);
 				} catch (e) {
 					console.log(e);
 					return;
@@ -196,7 +196,7 @@ async function generateScreenshot(baseUrl, data) {
 		return canvas2;
 	}
 
-	function getImage(url) {
+	function loadImage(url) {
 		if (!url) return new Promise(r => r(false));
 
 		url = URL.resolve(baseUrl, url);
@@ -205,7 +205,7 @@ async function generateScreenshot(baseUrl, data) {
 			const img = new Image();
 			img.onload = () => resolve(img);
 			img.onerror = err => reject(err);
-			fetch(url).then(buffer => img.src = buffer);
+			fetch(url).then(buffer => img.src = buffer).catch(reject);
 		})
 	}
 

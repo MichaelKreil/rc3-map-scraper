@@ -19,9 +19,8 @@ run();
 async function run() {
 	while (!queue.empty()) {
 		let url = queue.next();
-		let data;
-
-		data = JSON.parse(await fetch(url));
+		if (url.startsWith('https://cert.maps.at.rc3.world')) continue;
+		let data = JSON.parse(await fetch(url));
 
 		scanForMapUrls(url, data);
 		await generateScreenshot(url, data);

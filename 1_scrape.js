@@ -19,17 +19,24 @@ run();
 async function run() {
 	while (!queue.empty()) {
 		let url = queue.next();
-		if (url === 'https://cert.maps.at.rc3.world//main.json') continue;
+		//if (url.includes('.maps.at.rc3.world/')) continue;
 
 		let data;
 		try {
 			data = JSON.parse(await fetch(url));
 		} catch (e) {
+			console.log('SCRAPING PROBLEMS', e)
 			continue;
 		}
 
 		scanForMapUrls(url, data);
-		await generateScreenshot(url, data);
+
+		try {
+			await generateScreenshot(url, data);
+		} catch (e) {
+			console.log('SCREENSHOT PROBLEMS', e)
+			continue;
+		}
 	}
 }
 
@@ -183,10 +190,10 @@ async function generateScreenshot(baseUrl, data) {
 
 		url = URL.resolve(baseUrl, url);
 		url = url.replace(/#.*/,'');
-		return new Promise(resolve => {
+		return new Promise((resolve, reject) => {
 			const img = new Image();
 			img.onload = () => resolve(img);
-			img.onerror = err => { throw err }
+			img.onerror = err => reject(err);
 			fetch(url).then(buffer => img.src = buffer);
 		})
 	}
@@ -196,14 +203,15 @@ async function generateScreenshot(baseUrl, data) {
 		if (!l.visible) return false;
 		if (l.opacity === 0) return false;
 		if (l.type === 'objectgroup') return false;
+		if (l.type === 'imagelayer') return false; // sorry saarland
 
 		//console.log(l);
 
-		if (l.type !== 'tilelayer') throw Error();
-		if (l.height !== data.height) throw Error();
-		if (l.width !== data.width) throw Error();
-		if (l.x !== 0) throw Error();
-		if (l.y !== 0) throw Error();
+		if (l.type !== 'tilelayer') {console.log(l); throw Error();}
+		if (l.height !== data.height) {console.log(l); throw Error();}
+		if (l.width !== data.width) {console.log(l); throw Error();}
+		if (l.x !== 0) {console.log(l); throw Error();}
+		if (l.y !== 0) {console.log(l); throw Error();}
 
 		return true;
 	})

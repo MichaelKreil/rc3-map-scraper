@@ -163,7 +163,7 @@ async function generateScreenshot(baseUrl, data) {
 
 	fs.writeFileSync(pngFilename, canvas.toBuffer('image/png'));
 
-	child_process.execSync('optipng '+pngFilename);
+	child_process.execSync('optipng '+pngFilename, {stdio:'ignore'});
 	
 	return
 }

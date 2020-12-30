@@ -16,8 +16,7 @@ const FLIPPED_VERTICALLY_FLAG   = 0x40000000;
 const FLIPPED_DIAGONALLY_FLAG   = 0x20000000;
 
 let queue = new Queue();
-//queue.add('https://lobby.maps.at.rc3.world/main.json');
-queue.add('https://mumalab.maps.at.rc3.world/main.json');
+queue.add('https://lobby.maps.at.rc3.world/main.json');
 
 run();
 
@@ -42,7 +41,6 @@ async function run() {
 			console.log('SCREENSHOT PROBLEMS', e)
 			continue;
 		}
-		break;
 	}
 }
 

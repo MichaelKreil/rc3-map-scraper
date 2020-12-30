@@ -105,7 +105,7 @@ async function generateScreenshot(baseUrl, data) {
 
 	let tiles = [];
 
-	if (data.renderorder !== 'right-down') throw Error();
+	//if (data.renderorder !== 'right-down') throw Error();
 	if (data.tilewidth !== 32) throw Error();
 	if (data.tileheight !== 32) throw Error();
 	if (data.type !== 'map') throw Error();
@@ -278,6 +278,7 @@ function scanForMapUrls(baseUrl, data) {
 				case 'depth':
 				case 'exitlayer':
 				case 'getbadge':
+				case 'getbadge_x':
 				case 'jitsi':
 				case 'jitsiinstance':
 				case 'jitsiroom':

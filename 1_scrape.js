@@ -255,9 +255,56 @@ async function generateScreenshot(baseUrl, data) {
 				if (!tileIndex) return;
 
 				// Read out the flags
-				let flipped_horizontally = (tileIndex & FLIPPED_HORIZONTALLY_FLAG);
-				let flipped_vertically = (tileIndex & FLIPPED_VERTICALLY_FLAG);
-				let flipped_diagonally = (tileIndex & FLIPPED_DIAGONALLY_FLAG);
+				let flipped_horizontally = Boolean(tileIndex & FLIPPED_HORIZONTALLY_FLAG);
+				let flipped_vertically = Boolean(tileIndex & FLIPPED_VERTICALLY_FLAG);
+				let flipped_diagonally = Boolean(tileIndex & FLIPPED_DIAGONALLY_FLAG);
+
+				// https://github.com/photonstorm/phaser/blob/master/src/tilemaps/parsers/tiled/ParseGID.js
+				// https://github.com/photonstorm/phaser/blob/master/src/tilemaps/parsers/tiled/ParseTileLayers.js
+				// https://github.com/photonstorm/phaser/blob/master/src/tilemaps/TilemapLayerCanvasRenderer.js
+				let rotation = 0;
+				let flipped = false;
+
+				if (flipped_horizontally && flipped_vertically && flipped_diagonally)
+				{
+					rotation = Math.PI / 2;
+					flipped = true;
+				}
+				else if (flipped_horizontally && flipped_vertically && !flipped_diagonally)
+				{
+					rotation = Math.PI;
+					flipped = false;
+				}
+				else if (flipped_horizontally && !flipped_vertically && flipped_diagonally)
+				{
+					rotation = Math.PI / 2;
+					flipped = false;
+				}
+				else if (flipped_horizontally && !flipped_vertically && !flipped_diagonally)
+				{
+					rotation = 0;
+					flipped = true;
+				}
+				else if (!flipped_horizontally && flipped_vertically && flipped_diagonally)
+				{
+					rotation = 3 * Math.PI / 2;
+					flipped = false;
+				}
+				else if (!flipped_horizontally && flipped_vertically && !flipped_diagonally)
+				{
+					rotation = Math.PI;
+					flipped = true;
+				}
+				else if (!flipped_horizontally && !flipped_vertically && flipped_diagonally)
+				{
+					rotation = 3 * Math.PI / 2;
+					flipped = true;
+				}
+				else if (!flipped_horizontally && !flipped_vertically && !flipped_diagonally)
+				{
+					rotation = 0;
+					flipped = false;
+				}
 
 				// Clear the flags
 				tileIndex &= ~(FLIPPED_HORIZONTALLY_FLAG |
@@ -267,8 +314,22 @@ async function generateScreenshot(baseUrl, data) {
 				let tile = tiles[tileIndex];
 				if (!tile) return;
 				if (!tile.image) return;
+
+				ctx.save();
+
+				let halfWidth = tile.w / 2;
+				let halfHeight = tile.h / 2;
+
+				ctx.translate(x0*32 + halfWidth, y0*32 + halfHeight);
+
+				let h_scale = flipped ? -1 : 1;
+
+				ctx.scale(h_scale,1);
+				ctx.rotate(rotation);
+
 				ctx.globalAlpha = l.opacity;
-				ctx.drawImage(tile.image, tile.x, tile.y, tile.w, tile.h, x0*32, y0*32, 32, 32);
+				ctx.drawImage(tile.image, tile.x, tile.y, tile.w, tile.h, -halfWidth, -halfHeight, tile.w, tile.h);
+				ctx.restore();
 			})
 		}
 	}

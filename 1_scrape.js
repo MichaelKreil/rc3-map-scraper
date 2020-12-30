@@ -100,6 +100,7 @@ async function generateScreenshot(baseUrl, data) {
 	let pngFilename = resolve(__dirname, 'image', key+'.png');
 
 	if (fs.existsSync(pngFilename)) return;
+	if (data.infinite) return;
 
 	console.log('   generateScreenshot', pngFilename);
 
@@ -109,7 +110,6 @@ async function generateScreenshot(baseUrl, data) {
 	if (data.tilewidth !== 32) throw Error();
 	if (data.tileheight !== 32) throw Error();
 	if (data.type !== 'map') throw Error();
-	if (data.infinite) throw Error();
 	if (data.orientation !== 'orthogonal') throw Error();
 
 	//console.dir(data, {depth:9});

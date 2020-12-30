@@ -256,60 +256,52 @@ async function generateScreenshot(baseUrl, data) {
 
 				// Read out the flags
 				let flipped_horizontally = Boolean(tileIndex & FLIPPED_HORIZONTALLY_FLAG);
-				let flipped_vertically = Boolean(tileIndex & FLIPPED_VERTICALLY_FLAG);
-				let flipped_diagonally = Boolean(tileIndex & FLIPPED_DIAGONALLY_FLAG);
+				let flipped_vertically   = Boolean(tileIndex & FLIPPED_VERTICALLY_FLAG);
+				let flipped_diagonally   = Boolean(tileIndex & FLIPPED_DIAGONALLY_FLAG);
 
-				// https://github.com/photonstorm/phaser/blob/master/src/tilemaps/parsers/tiled/ParseGID.js
-				// https://github.com/photonstorm/phaser/blob/master/src/tilemaps/parsers/tiled/ParseTileLayers.js
-				// https://github.com/photonstorm/phaser/blob/master/src/tilemaps/TilemapLayerCanvasRenderer.js
 				let rotation = 0;
 				let flipped = false;
 
-				if (flipped_horizontally && flipped_vertically && flipped_diagonally)
-				{
-					rotation = Math.PI / 2;
-					flipped = true;
-				}
-				else if (flipped_horizontally && flipped_vertically && !flipped_diagonally)
-				{
-					rotation = Math.PI;
-					flipped = false;
-				}
-				else if (flipped_horizontally && !flipped_vertically && flipped_diagonally)
-				{
-					rotation = Math.PI / 2;
-					flipped = false;
-				}
-				else if (flipped_horizontally && !flipped_vertically && !flipped_diagonally)
-				{
-					rotation = 0;
-					flipped = true;
-				}
-				else if (!flipped_horizontally && flipped_vertically && flipped_diagonally)
-				{
-					rotation = 3 * Math.PI / 2;
-					flipped = false;
-				}
-				else if (!flipped_horizontally && flipped_vertically && !flipped_diagonally)
-				{
-					rotation = Math.PI;
-					flipped = true;
-				}
-				else if (!flipped_horizontally && !flipped_vertically && flipped_diagonally)
-				{
-					rotation = 3 * Math.PI / 2;
-					flipped = true;
-				}
-				else if (!flipped_horizontally && !flipped_vertically && !flipped_diagonally)
-				{
-					rotation = 0;
-					flipped = false;
+				if (flipped_horizontally) {
+					if (flipped_vertically) {
+						if (flipped_diagonally) {
+							rotation = Math.PI / 2;
+							flipped = true;
+						} else {
+							rotation = Math.PI;
+							flipped = false;
+						}
+					} else {
+						if (flipped_diagonally) {
+							rotation = Math.PI / 2;
+							flipped = false;
+						} else {
+							rotation = 0;
+							flipped = true;
+						}
+					}
+				} else {
+					if (flipped_vertically) {
+						if (flipped_diagonally) {
+							rotation = 3 * Math.PI / 2;
+							flipped = false;
+						} else {
+							rotation = Math.PI;
+							flipped = true;
+						}
+					} else {
+						if (flipped_diagonally) {
+							rotation = 3 * Math.PI / 2;
+							flipped = true;
+						} else {
+							rotation = 0;
+							flipped = false;
+						}
+					}
 				}
 
 				// Clear the flags
-				tileIndex &= ~(FLIPPED_HORIZONTALLY_FLAG |
-								FLIPPED_VERTICALLY_FLAG |
-								FLIPPED_DIAGONALLY_FLAG);
+				tileIndex &= ~(FLIPPED_HORIZONTALLY_FLAG | FLIPPED_VERTICALLY_FLAG | FLIPPED_DIAGONALLY_FLAG);
 
 				let tile = tiles[tileIndex];
 				if (!tile) return;

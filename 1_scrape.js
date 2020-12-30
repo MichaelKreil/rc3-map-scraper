@@ -16,7 +16,8 @@ const FLIPPED_VERTICALLY_FLAG   = 0x40000000;
 const FLIPPED_DIAGONALLY_FLAG   = 0x20000000;
 
 let queue = new Queue();
-queue.add('https://lobby.maps.at.rc3.world/main.json');
+//queue.add('https://lobby.maps.at.rc3.world/main.json');
+queue.add('https://mumalab.maps.at.rc3.world/main.json');
 
 run();
 
@@ -41,6 +42,7 @@ async function run() {
 			console.log('SCREENSHOT PROBLEMS', e)
 			continue;
 		}
+		break;
 	}
 }
 
@@ -144,6 +146,11 @@ async function generateScreenshot(baseUrl, data) {
 		}
 		if (tileset.tiles) {
 			for (let t of tileset.tiles) {
+				if (t.animation && t.animation[0].tileid) {
+					tiles[t.id+tileset.firstgid] = tiles[t.animation[0].tileid+tileset.firstgid]
+					continue;
+				}
+
 				if (!t.image) {
 					let x = tileset.margin + (tileset.spacing+tileset.tilewidth)*(t.id % tileset.columns);
 					let y = tileset.margin + (tileset.spacing+tileset.tileheight)*(Math.floor(t.id/tileset.columns));
@@ -329,7 +336,7 @@ async function generateScreenshot(baseUrl, data) {
 	fs.writeFileSync(pngFilename, canvas.toBuffer('image/png'));
 
 	child_process.execSync('optipng '+pngFilename, {stdio:'ignore'});
-	
+
 	return
 }
 

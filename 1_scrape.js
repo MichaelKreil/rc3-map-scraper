@@ -400,21 +400,25 @@ function scanForMapUrls(baseUrl, data) {
 						throw Error();
 					}
 					if (l.data) {
+						let xs = 0, ys = 0, s = 0;
 						l.data.forEach((c,i) => {
 							if (!c) return;
 							let x = (i % l.width);
 							let y = Math.floor(i/l.width);
-							mapLinks.push({url,hash:hashUrl(url),x,y});
+							xs += x; ys += y; s++;
 						})
+						if (s > 0) mapLinks.push({url,hash:hashUrl(url),x:xs/s,y:ys/s});
 					}
 					if (l.chunks) {
 						l.chunks.forEach(chunk => {
+							let xs = 0, ys = 0, s = 0;
 							chunk.data.forEach((c,i) => {
 								if (!c) return;
 								let x = chunk.x + (i % chunk.width);
 								let y = chunk.y + Math.floor(i/chunk.width);
-								mapLinks.push({url,hash:hashUrl(url),x,y});
+								xs += x; ys += y; s++;
 							})
+							if (s > 0) mapLinks.push({url,hash:hashUrl(url),x:xs/s,y:ys/s});
 						})
 					}
 					queue.add(url);

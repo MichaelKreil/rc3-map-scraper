@@ -14,6 +14,7 @@ const FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
 const FLIPPED_VERTICALLY_FLAG   = 0x40000000;
 const FLIPPED_DIAGONALLY_FLAG   = 0x20000000;
 
+let links = [];
 let queue = new Queue();
 queue.add('https://lobby.maps.at.rc3.world/main.json');
 
@@ -41,6 +42,8 @@ async function run() {
 			continue;
 		}
 	}
+
+	fs.writeFileSync('data/links.json', JSON.stringify(links), 'utf8');
 }
 
 
@@ -341,7 +344,7 @@ async function generateScreenshot(baseUrl, data) {
 }
 
 function scanForMapUrls(baseUrl, data) {
-	let mapUrls = [];
+	let mapLinks = [];
 	data.layers.forEach(l => {
 		if (!l) return;
 		if (!l.properties) return;
@@ -378,6 +381,22 @@ function scanForMapUrls(baseUrl, data) {
 				case 'exitsceneurl':
 					let url = URL.resolve(baseUrl, p.value);
 					url = url.replace(/#.*/,'');
+					if ((l.x !== 0) || (l.y !== 0)) {
+						console.log(l);
+						throw Error();
+					}
+					/*
+					if (!l.data) {
+						console.log(l);
+						throw Error();
+					}
+					l.data.forEach((c,i) => {
+						if (!c) return;
+						let y = 32*Math.floor(i/l.width);
+						let x = 32*(i % l.width);
+						mapLinks.push({url,hash:hashUrl(url),x,y});
+					})
+					*/
 					queue.add(url);
 				break;
 				default:
@@ -385,6 +404,11 @@ function scanForMapUrls(baseUrl, data) {
 					throw Error(p.name);
 			}
 		})
+	})
+	links.push({
+		url:baseUrl,
+		hash:hashUrl(baseUrl),
+		links:mapLinks,
 	})
 }
 

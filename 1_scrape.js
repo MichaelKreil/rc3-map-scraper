@@ -23,12 +23,17 @@ run();
 async function run() {
 	while (!queue.empty()) {
 		let url = queue.next();
-		//if (url.includes('.maps.at.rc3.world/')) continue;
 
-		let data;
+		let data = await fetch(url);
+		if (!data) continue;
+
+		data = data.toString('utf8');
+		if (data.startsWith('<!doctype html>')) continue;
+
 		try {
-			data = JSON.parse(await fetch(url));
+			data = JSON.parse(data);
 		} catch (e) {
+			console.log(data);
 			console.log('SCRAPING PROBLEMS', e)
 			continue;
 		}

@@ -399,18 +399,24 @@ function scanForMapUrls(baseUrl, data) {
 						console.log(l);
 						throw Error();
 					}
-					/*
-					if (!l.data) {
-						console.log(l);
-						throw Error();
+					if (l.data) {
+						l.data.forEach((c,i) => {
+							if (!c) return;
+							let x = (i % l.width);
+							let y = Math.floor(i/l.width);
+							mapLinks.push({url,hash:hashUrl(url),x,y});
+						})
 					}
-					l.data.forEach((c,i) => {
-						if (!c) return;
-						let y = 32*Math.floor(i/l.width);
-						let x = 32*(i % l.width);
-						mapLinks.push({url,hash:hashUrl(url),x,y});
-					})
-					*/
+					if (l.chunks) {
+						l.chunks.forEach(chunk => {
+							chunk.data.forEach((c,i) => {
+								if (!c) return;
+								let x = chunk.x + (i % chunk.width);
+								let y = chunk.y + Math.floor(i/chunk.width);
+								mapLinks.push({url,hash:hashUrl(url),x,y});
+							})
+						})
+					}
 					queue.add(url);
 				break;
 				default:
@@ -420,6 +426,8 @@ function scanForMapUrls(baseUrl, data) {
 		})
 	})
 	links.push({
+		width:data.width,
+		height:data.height,
 		url:baseUrl,
 		hash:hashUrl(baseUrl),
 		links:mapLinks,

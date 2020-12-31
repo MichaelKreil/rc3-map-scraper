@@ -9,7 +9,6 @@ const URL = require('url');
 const {Image, createCanvas} = require('canvas');
 
 const cacheFetch = new Cache(resolve(__dirname, 'cache'));
-const imageFetch = new Cache(resolve(__dirname, 'image'));
 
 const FLIPPED_HORIZONTALLY_FLAG = 0x80000000;
 const FLIPPED_VERTICALLY_FLAG   = 0x40000000;

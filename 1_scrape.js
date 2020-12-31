@@ -68,11 +68,11 @@ function Queue() {
 }
 
 function fetch(url) {
-	let key = url.replace(/[^a-z0-9_\-]/gi, '_');
+	let key = hashUrl(url);
 	return cacheFetch(key, () => {
 		// Everything is offline :(
 		return new Promise((resolve, reject) => reject());
-		
+
 		console.log('   fetch', url);
 		return new Promise((resolve, reject) => {
 			https.get(url, {timeout:10*1000}, res => {
@@ -102,7 +102,7 @@ function Cache(dir) {
 }
 
 async function generateScreenshot(baseUrl, data) {
-	let key = baseUrl.replace(/[^a-z0-9_\-]/gi, '_');
+	let key = hashUrl(baseUrl);
 	let pngFilename = resolve(__dirname, 'image', key+'.png');
 
 	if (fs.existsSync(pngFilename)) return;
@@ -387,3 +387,10 @@ function scanForMapUrls(baseUrl, data) {
 		})
 	})
 }
+
+function hashUrl(url) {
+	return url.replace(/[^a-z0-9_\-]/gi, '_');
+}
+
+
+

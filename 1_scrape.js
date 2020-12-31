@@ -103,9 +103,14 @@ function Cache(dir) {
 	return async function (key, cb) {
 		let filename = resolve(dir, key);
 		if (fs.existsSync(filename)) return fs.promises.readFile(filename);
-		let result = await cb();
-		fs.writeFileSync(filename, result);
-		return result;
+		try {
+			let result = await cb();
+			fs.writeFileSync(filename, result);
+			return result;
+		} catch (e) {
+			console.log('cache failed');
+			return false;
+		}
 	}
 }
 
@@ -126,9 +131,10 @@ async function generateScreenshot(baseUrl, data) {
 	if (data.type !== 'map') throw Error();
 	if (data.orientation !== 'orthogonal') throw Error();
 
+	//console.log('   tileset');
 	//console.dir(data, {depth:9});
 	for (let tileset of data.tilesets) {
-		//console.log(tileset);
+		//console.log(tileset.name);
 		if (!tileset.tileheight) continue;
 		if (!tileset.tilewidth) continue;
 		if (tileset.backgroundcolor) {console.log(tileset); throw Error()};
@@ -139,51 +145,50 @@ async function generateScreenshot(baseUrl, data) {
 		tileset.spacing = tileset.spacing || 0;
 
 		let image;
-		try {
+		if (tileset.image) {
 			image = await loadImage(tileset.image);
-		} catch (e) {
-			console.log(e);
-			return;
-		}
-		if (tileset.transparentcolor) image = await makeColorTransparent(image, tileset.transparentcolor);
+			if (image) {
+				if (tileset.transparentcolor) image = await makeColorTransparent(image, tileset.transparentcolor);
 
-		for (let i = 0; i < tileset.tilecount; i++) {
-			let x = tileset.margin + (tileset.spacing+tileset.tilewidth)*(i % tileset.columns);
-			let y = tileset.margin + (tileset.spacing+tileset.tileheight)*(Math.floor(i/tileset.columns));
-			tiles[i+tileset.firstgid] = { image, x, y, w:tileset.tilewidth, h:tileset.tileheight };
-		}
-		if (tileset.tiles) {
-			for (let t of tileset.tiles) {
-				if (t.animation && t.animation[0].tileid) {
-					tiles[t.id+tileset.firstgid] = tiles[t.animation[0].tileid+tileset.firstgid]
-					continue;
+				for (let i = 0; i < tileset.tilecount; i++) {
+					let x = tileset.margin + (tileset.spacing+tileset.tilewidth)*(i % tileset.columns);
+					let y = tileset.margin + (tileset.spacing+tileset.tileheight)*(Math.floor(i/tileset.columns));
+					tiles[i+tileset.firstgid] = { image, x, y, w:tileset.tilewidth, h:tileset.tileheight };
 				}
+			}
+		}
 
-				if (!t.image) {
+		//console.log('tileset.tiles');
+
+		if (!tileset.tiles) continue;
+
+		for (let t of tileset.tiles) {
+			if (t.animation && t.animation[0].tileid) {
+				tiles[t.id+tileset.firstgid] = tiles[t.animation[0].tileid+tileset.firstgid]
+				continue;
+			}
+
+			if (!t.image) {
+				if (image) {
 					let x = tileset.margin + (tileset.spacing+tileset.tilewidth)*(t.id % tileset.columns);
 					let y = tileset.margin + (tileset.spacing+tileset.tileheight)*(Math.floor(t.id/tileset.columns));
 					tiles[t.id+tileset.firstgid] = { image, x, y, w:tileset.tilewidth, h:tileset.tileheight };
-					continue;
 				}
+				continue;
+			}
 
-				if (!t.imageheight || !t.imagewidth) throw Error();
+			if (!t.imageheight || !t.imagewidth) throw Error();
 
-				let image2
-				try {
-					image2 = await loadImage(t.image);
-				} catch (e) {
-					console.log(e);
-					return;
-				}
-				if (tileset.transparentcolor) image2 = await makeColorTransparent(image2, tileset.transparentcolor);
+			let image2 = await loadImage(t.image);
+			if (!image2) continue;
+			if (tileset.transparentcolor) image2 = await makeColorTransparent(image2, tileset.transparentcolor);
 
-				tiles[t.id+tileset.firstgid] = {
-					image:image2,
-					x:0,
-					y:0,
-					w:t.imagewidth,
-					h:t.imageheight
-				}
+			tiles[t.id+tileset.firstgid] = {
+				image:image2,
+				x:0,
+				y:0,
+				w:t.imagewidth,
+				h:t.imageheight
 			}
 		}
 	}
@@ -228,25 +233,27 @@ async function generateScreenshot(baseUrl, data) {
 		})
 	}
 
+	console.log('   layers');
 	let layerData = [];
 	let visibleLayers = data.layers;
-	visibleLayers.forEach(l => {
-		if (l.type === 'group') l.layers.forEach(l => visibleLayers.push(l));
+	visibleLayers = visibleLayers.filter(l => {
+		if (l.type !== 'group') return true;
+		l.layers.forEach(l => visibleLayers.push(l));
+		return false;
 	})
 	visibleLayers = visibleLayers.filter(l => {
 		if (!l.visible) return false;
 		if (l.opacity === 0) return false;
-		if (l.type === 'group') return false;
 		if (l.type === 'objectgroup') return false;
-		if (l.type === 'imagelayer') return false; // sorry saarland
-
-		//console.log(l);
+		if (l.type === 'imagelayer') return false; // sorry
 
 		if (l.type !== 'tilelayer') {console.log(l); throw Error();}
 		if (l.height !== data.height) {console.log(l); throw Error();}
 		if (l.width !== data.width) {console.log(l); throw Error();}
 		if (l.x !== 0) {console.log(l); throw Error();}
 		if (l.y !== 0) {console.log(l); throw Error();}
+		if (!l.data) {console.log(l); throw Error();}
+		if (l.chunks) {console.log(l); throw Error();}
 
 		return true;
 	})

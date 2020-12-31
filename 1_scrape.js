@@ -108,7 +108,7 @@ function Cache(dir) {
 			fs.writeFileSync(filename, result);
 			return result;
 		} catch (e) {
-			console.log('cache failed');
+			//console.log('cache failed');
 			return false;
 		}
 	}

@@ -48,7 +48,7 @@ async function run() {
 		}
 	}
 
-	fs.writeFileSync('data/links.json', JSON.stringify(links), 'utf8');
+	fs.writeFileSync('data/links.json', JSON.stringify(links, null, '\t'), 'utf8');
 }
 
 
@@ -225,15 +225,17 @@ async function generateScreenshot(baseUrl, data) {
 
 		url = URL.resolve(baseUrl, url);
 		url = url.replace(/#.*/,'');
-		return new Promise((resolve, reject) => {
+		return new Promise((cbResolve, cbReject) => {
 			const img = new Image();
-			img.onload = () => resolve(img);
-			img.onerror = err => reject(err);
-			fetch(url).then(buffer => img.src = buffer).catch(() => resolve(false));
+			img.onload = () => cbResolve(img);
+			img.onerror = err => cbReject(err);
+			fetch(url).catch(e => cbResolve(false)).then(buffer => {
+				if (!buffer) return cbResolve(false);
+				img.src = buffer
+			});
 		})
 	}
 
-	console.log('   layers');
 	let layerData = [];
 	let visibleLayers = data.layers;
 	visibleLayers = visibleLayers.filter(l => {

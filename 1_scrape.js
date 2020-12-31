@@ -71,6 +71,9 @@ function Queue() {
 function fetch(url) {
 	let key = url.replace(/[^a-z0-9_\-]/gi, '_');
 	return cacheFetch(key, () => {
+		// Everything is offline :(
+		return new Promise((resolve, reject) => reject());
+		
 		console.log('   fetch', url);
 		return new Promise((resolve, reject) => {
 			https.get(url, {timeout:10*1000}, res => {
